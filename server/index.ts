@@ -6,6 +6,8 @@ import env from './env';
 import { node, initNode } from './node';
 import postsManager from './posts';
 
+const twilio = require('twilio')
+
 // Configure server
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -29,7 +31,7 @@ app.get('/api/posts/:id', (req, res) => {
 app.post('/api/posts', async (req, res, next) => {
   try {
     // const { name, content } = req.body;
-    const { time } = req.body;
+    const { time, memo } = req.body;
 
 
     // if (!name || !content) {
@@ -38,7 +40,7 @@ app.post('/api/posts', async (req, res, next) => {
 
     // const post = postsManager.addPost(name, content);
     const invoice = await node.addInvoice({
-      memo: `Lightning Posts`,
+      memo: memo,
       value: time,
       expiry: '70000', // 2 minutes
     });
@@ -52,6 +54,23 @@ app.post('/api/posts', async (req, res, next) => {
     next(err);
   }
 });
+
+app.post('/api/message', (req, res) => {
+
+  const { SMSmessage, clientNumber } = req.body
+  const accountSid = 'ACf2ded36a3e23f21e3ebf792ddc595330'
+  const token = '54c369e9f95f5451deb013fe490c210e'
+  const client = new twilio(accountSid, token)
+      
+  client.messages.create({
+        body: SMSmessage,
+        to: clientNumber,  
+        from: '+12029151761'
+    })
+    .then((message: any) => console.log(message.sid))
+    .catch((err: any) => console.log(err))
+  })
+
 
 app.get('/', (req, res) => {
   res.send('You need to load the webpack-dev-server page, not the server page!');
